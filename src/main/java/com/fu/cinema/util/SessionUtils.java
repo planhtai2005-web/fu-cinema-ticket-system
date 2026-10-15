@@ -13,8 +13,15 @@ public final class SessionUtils {
     }
 
     public static SessionUser getCurrentUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
+        if (request == null) {
+            return null;
+        }
 
+        HttpSession session = request.getSession(false);
+        return getCurrentUser(session);
+    }
+
+    public static SessionUser getCurrentUser(HttpSession session) {
         if (session == null) {
             return null;
         }
@@ -26,13 +33,27 @@ public final class SessionUtils {
                 : null;
     }
 
+    /**
+     * Luôn lấy customerId từ session, KHÔNG lấy từ form/URL.
+     */
+    public static Long getCurrentCustomerId(HttpSession session) {
+        SessionUser user = getCurrentUser(session);
+        return user == null ? null : user.getCustomerId();
+    }
+
     public static void setCurrentUser(
             HttpSession session,
             SessionUser user) {
-        session.setAttribute(CURRENT_USER, user);
+        if (session != null) {
+            session.setAttribute(CURRENT_USER, user);
+        }
     }
 
     public static void clearSession(HttpServletRequest request) {
+        if (request == null) {
+            return;
+        }
+
         HttpSession session = request.getSession(false);
 
         if (session != null) {
