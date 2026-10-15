@@ -108,10 +108,10 @@ src/test          # test khởi động ứng dụng với H2
 
 | Thành viên | MSSV | Chức năng |
 |---|---|---|
-| Người 1 (Leader) — [@planhtai2005-web](https://github.com/planhtai2005-web) | `...` | Khởi tạo project, entity, repository, dữ liệu mẫu, service layer, xử lý lỗi, đăng nhập/đăng ký/phân quyền, README & release |
-| Người 2 — `Họ tên` | `...` | Quản lý khách hàng, hồ sơ cá nhân và đổi mật khẩu |
-| Người 3 — `Họ tên` | `...` | Thể loại, phim, trang chủ & chi tiết phim, đánh giá (bonus) |
-| Người 4 — `Họ tên` | `...` | Phòng chiếu, suất chiếu, đặt vé, quản lý đơn, lịch sử đơn, báo cáo doanh thu |
+| Người 1 (Leader) — `Phạm Lê Anh Tài` [@planhtai2005-web](https://github.com/planhtai2005-web) | `DE190702` | Khởi tạo project, entity, repository, dữ liệu mẫu, service layer, xử lý lỗi, đăng nhập/đăng ký/phân quyền, README & release |
+| Người 2 — `Cao Đức Tiến`[@CaoDucTien-web](https://github.com/CaoDucTien) | `DE190608` | Quản lý khách hàng, hồ sơ cá nhân và đổi mật khẩu |
+| Người 3 — `Hoàng Khánh Hòa`[@hoangkhanhhoa1976vn-web](https://github.com/hoangkhanhhoa1976vn-de) | `DE190162` | Thể loại, phim, trang chủ & chi tiết phim, đánh giá (bonus) |
+| Người 4 — `Nguyễn Phước Hoài Nhật`[@nhatnphde180216-web](https://github.com/nhatnphde180216-design) | `DE180216` | Phòng chiếu, suất chiếu, đặt vé, quản lý đơn, lịch sử đơn, báo cáo doanh thu |
 
 ## Quy trình làm việc nhóm
 
