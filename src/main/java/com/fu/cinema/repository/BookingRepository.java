@@ -1,0 +1,141 @@
+
+package com.fu.cinema.repository;
+
+import com.fu.cinema.entity.Booking;
+import com.fu.cinema.enums.BookingStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import com.fu.cinema.dto.MovieRevenueDTO;
+import java.util.List;
+import org.springframework.data.jpa.repository.Modifying;
+
+
+
+public interface BookingRepository extends JpaRepository<Booking, Long> {
+
+    boolean existsByCustomer_CustomerId(Long customerId);
+
+    boolean existsByShowtime_ShowtimeId(Long showtimeId);
+
+    long countByStatus(BookingStatus status);
+
+    @EntityGraph(attributePaths = {
+            "showtime", "showtime.movie", "showtime.room"
+    })
+    Page<Booking> findByCustomer_CustomerId(
+            Long customerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {
+            "showtime", "showtime.movie", "showtime.room"
+    })
+    Page<Booking> findByCustomer_CustomerIdAndStatus(
+            Long customerId, BookingStatus status, Pageable pageable);
+
+    // ===== TODO 10 - Q5: Lấy chi tiết booking =====
+    @Query("""
+        SELECT DISTINCT b
+        FROM Booking b
+        JOIN FETCH b.customer c
+        JOIN FETCH b.showtime s
+        JOIN FETCH s.movie m
+        JOIN FETCH s.room r
+        LEFT JOIN FETCH b.tickets t
+        WHERE b.bookingId = :id
+        """)
+    Optional<Booking> findDetailById(@Param("id") Long id);
+
+
+    // ===== TODO 10 - Q6: Tìm kiếm booking cho Admin =====
+    @Query(value = """
+            SELECT b FROM Booking b
+            JOIN FETCH b.customer c
+            JOIN FETCH b.showtime s
+            JOIN FETCH s.movie m
+            WHERE (:status IS NULL OR b.status = :status)
+              AND (:from IS NULL OR b.bookingDate >= :from)
+              AND (:to IS NULL OR b.bookingDate < :to)
+              AND (:kw IS NULL
+                   OR LOWER(c.fullName) LIKE LOWER(CONCAT('%', :kw, '%'))
+                   OR LOWER(c.email) LIKE LOWER(CONCAT('%', :kw, '%'))
+                   OR c.mobile LIKE CONCAT('%', :kw, '%'))
+            """,
+            countQuery = """
+            SELECT COUNT(b) FROM Booking b JOIN b.customer c
+            WHERE (:status IS NULL OR b.status = :status)
+              AND (:from IS NULL OR b.bookingDate >= :from)
+              AND (:to IS NULL OR b.bookingDate < :to)
+              AND (:kw IS NULL
+                   OR LOWER(c.fullName) LIKE LOWER(CONCAT('%', :kw, '%'))
+                   OR LOWER(c.email) LIKE LOWER(CONCAT('%', :kw, '%'))
+                   OR c.mobile LIKE CONCAT('%', :kw, '%'))
+            """)
+    Page<Booking> search(
+            @Param("status") BookingStatus status,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("kw") String keyword,
+            Pageable pageable);
+
+    // ===== TODO 10 - Q7: Doanh thu theo phim =====
+    @Query("""
+            SELECT new com.fu.cinema.dto.MovieRevenueDTO(
+                m.title, COUNT(t), SUM(t.price))
+            FROM Ticket t
+            JOIN t.booking b
+            JOIN t.showtime s
+            JOIN s.movie m
+            WHERE b.status = com.fu.cinema.enums.BookingStatus.CONFIRMED
+              AND b.bookingDate >= :from
+              AND b.bookingDate < :to
+            GROUP BY m.movieId, m.title
+            ORDER BY SUM(t.price) DESC
+            """)
+    List<MovieRevenueDTO> revenueByMovie(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // ===== TODO 10 - Q8: Booking đã xác nhận trong khoảng thời gian =====
+    @Query("""
+            SELECT b FROM Booking b
+            JOIN FETCH b.customer
+            JOIN FETCH b.showtime s
+            JOIN FETCH s.movie
+            WHERE b.status = com.fu.cinema.enums.BookingStatus.CONFIRMED
+              AND b.bookingDate >= :from
+              AND b.bookingDate < :to
+            ORDER BY b.bookingDate DESC
+            """)
+    List<Booking> findConfirmedInPeriod(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // ===== TODO 10 - Q9: Hủy tất cả booking của một suất chiếu =====
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Booking b
+            SET b.status = com.fu.cinema.enums.BookingStatus.CANCELLED
+            WHERE b.showtime.showtimeId = :showtimeId
+              AND b.status <> com.fu.cinema.enums.BookingStatus.CANCELLED
+            """)
+    int cancelAllByShowtime(@Param("showtimeId") Long showtimeId);
+
+    // ===== TODO 10 - Q12: Kiểm tra khách đã xem phim chưa =====
+    @Query("""
+            SELECT COUNT(b) FROM Booking b
+            WHERE b.customer.customerId = :customerId
+              AND b.showtime.movie.movieId = :movieId
+              AND b.status = com.fu.cinema.enums.BookingStatus.CONFIRMED
+              AND b.showtime.endTime < :now
+            """)
+    long countWatched(
+            @Param("customerId") Long customerId,
+            @Param("movieId") Long movieId,
+            @Param("now") LocalDateTime now);
+
+}
